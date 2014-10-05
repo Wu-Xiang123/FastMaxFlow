@@ -70,6 +70,10 @@ class ShermanMaxFlowConductance:
     def almost_route(s, demands, epsilon):
         n = s.graph.number_of_nodes()
         m = s.graph.number_of_edges()
+
+        # TODO: fiddle around with these constants. They come from
+        #   (loose) bounds in the correctness proof, and have a
+        #   significant effect on performance.
         k1 = 3.5
         k2 = 2/7
 
