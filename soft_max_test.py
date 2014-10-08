@@ -7,7 +7,7 @@ import unittest
 
 
 class SoftMaxTest(unittest.TestCase):
-  def testGradNormInequalities(s):
+  def test_grad_norm_inequalities(s):
     for n in range(2, 100):
       for i in range(1000):
         x = np.random.normal(scale=n, size=(n))
