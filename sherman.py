@@ -11,6 +11,7 @@ class ShermanMaxFlowConductance:
     s.graph = g
     s.vertex_degrees = [1.0 * g.degree(v) for v in g.nodes()]
     s.edge_capacities = [1.0 * c for c in get_edge_capacities(g)]
+    # TODO generalize beyond just complete graphs
     s.alpha = (g.number_of_nodes() + 1) / (g.number_of_nodes())
 
     
