@@ -74,8 +74,8 @@ class ShermanMaxFlowConductance:
     # TODO: fiddle around with these constants. They come from
     #   (loose) bounds in the correctness proof, and have a
     #   significant effect on performance.
-    k1 = 3.5
-    k2 = 2/7
+    k1 = 7 / 2 / epsilon
+    k2 = 2 / 7
 
     scaling = 1
     f = np.zeros(m)
@@ -118,7 +118,10 @@ class ShermanMaxFlowConductance:
     
     flow = s.min_congestion_flow(demands, epsilon)
     max_edge_congestion = la.norm(s.compute_Cinv(flow), np.inf)
-    return flow / max_edge_congestion
+
+    max_flow = flow / max_edge_congestion
+    max_flow_value = s.compute_B(max_flow)[sink_i]
+    return max_flow, max_flow_value
 
 
 def min_congestion_flow(g, demands, epsilon):
