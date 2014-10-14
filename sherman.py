@@ -80,22 +80,28 @@ class ShermanMaxFlowConductance:
 
     scaling = 1
     f = np.zeros(m)
+    y = np.array(f)
     b = np.array(demands)
     norm_Rb = la.norm(s.compute_R(b), np.inf)
     scaling *= abs(k1 * math.log(n) / (2 * s.alpha * norm_Rb))
     b = b * scaling
+    iters = 1
 
     while True:
       while s.phi(f, b) < k1 * math.log(n):
         f = (k1 + 1) / k1 * f
+        y = (k1 + 1) / k1 * y
         b = (k1 + 1) / k1 * b
         scaling *= (k1 + 1) / k1
 
-      grad_phi_f = s.grad_phi(f, b)
-      delta = la.norm(s.compute_C(grad_phi_f), 1)
+      grad_phi_y = s.grad_phi(y, b)
+      delta = la.norm(s.compute_C(grad_phi_y), 1)
       if delta >= k2 * epsilon:
-          f -= delta / (1 + 4 * s.alpha**2) * s.compute_C(
-              np.sign(grad_phi_f))
+          f_prev = np.array(f)
+          f = y - delta / (1 + 4 * s.alpha**2) * s.compute_C(
+              np.sign(grad_phi_y))
+          y = f + (iters - 1) / (iters + 2) * (f - f_prev)
+          iters += 1
       else:
         return f / scaling
 
