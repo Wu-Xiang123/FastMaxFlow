@@ -61,7 +61,7 @@ class ShermanTest(unittest.TestCase):
         g = graph_util.diluted_complete_graph(n, p)
         if not g.has_edge(0, 1):
           g.add_edge(0, 1, {'capacity': 1})
-        flow, flow_value = sherman.max_flow(g, 0, 1, epsilon)
+        flow, flow_value = sherman.max_st_flow(g, 0, 1, epsilon)
         actual_flow_value, actual_flow = nx.ford_fulkerson(
             g.to_undirected(), 0, 1)
         s.assertGreater(flow_value, (1.0 - epsilon) * actual_flow_value)

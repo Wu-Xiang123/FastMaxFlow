@@ -19,7 +19,7 @@ print 'n:',n
 print 'm:', g.number_of_edges()
 
 start_time = time.clock()
-flow, _ = sherman.max_flow(g, 0, 1, epsilon)
+flow, _ = sherman.max_st_flow(g, 0, 1, epsilon)
 stop_time = time.clock()
 
 print 'final flow:\n',flow

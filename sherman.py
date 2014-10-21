@@ -12,7 +12,9 @@ class ShermanMaxFlowConductance:
     s.vertex_degrees = [1.0 * g.degree(v) for v in g.nodes()]
     s.edge_capacities = [1.0 * c for c in graph_util.get_edge_capacities(g)]
     # TODO generalize beyond just complete graphs
-    s.alpha = 2.0 / graph_util.estimate_conductance(g, 100)
+    s.alpha = 1.0
+    #s.alpha = 1.0 / graph_util.estimate_conductance(g, 100)
+    # print 'estimate that alpha = inv conductance is', s.alpha
 
     
   def compute_R(s, x):
@@ -118,17 +120,21 @@ class ShermanMaxFlowConductance:
     return f_total
 
 
-  def max_flow(s, source_i, sink_i, epsilon):
+  def max_flow(s, demands, epsilon):
+    flow = s.min_congestion_flow(demands, epsilon)
+    max_edge_congestion = la.norm(s.compute_Cinv(flow), np.inf)
+    max_flow = flow / max_edge_congestion
+    max_flow_value = 0
+    sink_nodes = np.maximum(np.sign(demands), np.zeros(len(demands)))
+    max_flow_value = np.dot(s.compute_B(max_flow), sink_nodes)
+    return max_flow, max_flow_value
+
+
+  def max_st_flow(s, source_i, sink_i, epsilon):
     demands = np.zeros(s.graph.number_of_nodes())
     demands[source_i] = -1
     demands[sink_i] = 1
-    
-    flow = s.min_congestion_flow(demands, epsilon)
-    max_edge_congestion = la.norm(s.compute_Cinv(flow), np.inf)
-
-    max_flow = flow / max_edge_congestion
-    max_flow_value = s.compute_B(max_flow)[sink_i]
-    return max_flow, max_flow_value
+    return s.max_flow(demands, epsilon)
 
 
 def min_congestion_flow(g, demands, epsilon):
@@ -136,6 +142,11 @@ def min_congestion_flow(g, demands, epsilon):
   return conductance_cong_approx.min_congestion_flow(demands, epsilon)
 
 
-def max_flow(g, source_i, sink_i, epsilon):
+def max_flow(g, demands, epsilon):
   conductance_cong_approx = ShermanMaxFlowConductance(g)
-  return conductance_cong_approx.max_flow(source_i, sink_i, epsilon)
+  return conductance_cong_approx.max_flow(demands, epsilon)
+
+
+def max_st_flow(g, s, t, epsilon):
+  conductance_cong_approx = ShermanMaxFlowConductance(g)
+  return conductance_cong_approx.max_st_flow(s, t, epsilon)
