@@ -44,3 +44,37 @@ def capacity_edge_iter(g):
   for n, neighbor_dict in g.adjacency_iter():
     for neighbor, edge_data in neighbor_dict.items():
       yield (n, neighbor, edge_data[_EDGE_CAPACITY_ATTR])
+
+
+def cut_weight(g, vs):
+  weight = 0
+  for v in vs:
+    adj_dict = g[v]
+    for neighbor, data_dict in adj_dict.items():
+      if not neighbor in vs:
+        weight += data_dict[_EDGE_CAPACITY_ATTR]
+  return weight
+
+
+def set_edge_weight(g, vs):
+  weight = 0
+  for v in vs:
+    adj_dict = g[v]
+    for neighbor, data_dict in adj_dict.items():
+      if (not neighbor in vs) or neighbor < v:
+        weight += data_dict[_EDGE_CAPACITY_ATTR]
+  return weight
+
+
+def cut_conductance(g, vs):
+  not_vs = set([v for v in g.nodes()]) - vs
+  min_s_edge_weight = min(set_edge_weight(g, vs), set_edge_weight(g, not_vs))
+  if min_s_edge_weight is 0:
+    return float("inf")
+  else:
+    return cut_weight(g, vs) / min_s_edge_weight
+
+
+def estimate_conductance(g, n_samples):
+  return min([cut_conductance(g, set(
+      [v for v in g.nodes() if random.random() < 0.5])) for i in range(n_samples)])

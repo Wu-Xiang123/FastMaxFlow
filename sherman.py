@@ -2,7 +2,7 @@ from __future__ import division
 import numpy as np
 import numpy.linalg as la
 import math
-from graph_util import get_edge_capacities, edge_iter
+import graph_util
 from soft_max import soft_max, grad_soft_max
 
 
@@ -10,9 +10,9 @@ class ShermanMaxFlowConductance:
   def __init__(s, g):
     s.graph = g
     s.vertex_degrees = [1.0 * g.degree(v) for v in g.nodes()]
-    s.edge_capacities = [1.0 * c for c in get_edge_capacities(g)]
+    s.edge_capacities = [1.0 * c for c in graph_util.get_edge_capacities(g)]
     # TODO generalize beyond just complete graphs
-    s.alpha = (g.number_of_nodes() + 1) / (g.number_of_nodes())
+    s.alpha = 2.0 / graph_util.estimate_conductance(g, 100)
 
     
   def compute_R(s, x):
@@ -34,7 +34,7 @@ class ShermanMaxFlowConductance:
   def compute_B(s, x):
     excess = np.zeros(s.graph.number_of_nodes())
     edge_i = 0
-    for edge_from, edge_to in edge_iter(s.graph):
+    for edge_from, edge_to in graph_util.edge_iter(s.graph):
       excess[edge_from] -= x[edge_i]
       excess[edge_to] += x[edge_i]
       edge_i += 1
@@ -44,7 +44,7 @@ class ShermanMaxFlowConductance:
   def compute_BT(s, x):
     potentials = np.zeros(s.graph.number_of_edges())
     edge_i = 0
-    for edge_from, edge_to in edge_iter(s.graph):
+    for edge_from, edge_to in graph_util.edge_iter(s.graph):
       potentials[edge_i] = -x[edge_from] + x[edge_to]
       edge_i += 1
     return potentials
