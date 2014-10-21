@@ -78,3 +78,38 @@ def cut_conductance(g, vs):
 def estimate_conductance(g, n_samples):
   return min([cut_conductance(g, set(
       [v for v in g.nodes() if random.random() < 0.5])) for i in range(n_samples)])
+
+
+def deserialize_exxon_graph(s):
+  g = nx.DiGraph()
+  node_id_dict = {}
+  for line in s.splitlines():
+    line = line.strip()
+    row = line.split('\t')
+    if len(row) < 2:
+      print 'warning: possibly malformed input line `%s`' % line
+      continue
+    num_adj = int(row[1])
+    if len(row) != (2 + 2 * num_adj):
+      print 'warning: possibly malformed input line `%s`' % line
+      continue
+    for i in range(num_adj):
+      edge_capacity = float(row[2 + 2*i + 1])
+      if edge_capacity == 0.0:
+        continue
+      node = int(row[0])
+      if not node in node_id_dict:
+        node_id_dict[node] = len(node_id_dict)
+      node_id = node_id_dict[node]
+      g.add_node(node_id)
+
+      neighbor_node = int(row[2 + 2*i])
+      if not neighbor_node in node_id_dict:
+        node_id_dict[neighbor_node] = len(node_id_dict)
+      neighbor_node_id = node_id_dict[neighbor_node]
+      g.add_edge(node_id, neighbor_node_id, {_EDGE_CAPACITY_ATTR: edge_capacity})
+  return g, node_id_dict
+
+
+def deserialize_exxon_node_list(s):
+  return [int(line.strip()) for line in s.splitlines() if line.strip()]
