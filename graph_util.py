@@ -113,3 +113,35 @@ def deserialize_exxon_graph(s):
 
 def deserialize_exxon_node_list(s):
   return [int(line.strip()) for line in s.splitlines() if line.strip()]
+
+
+def contract_edge(g, e):
+  u, v = e
+  g.remove_edge(u, v)
+  for neighbor, edge_data in g[v].items():
+    g.add_edge(u, neighbor, edge_data)
+  g.remove_node(v)
+
+
+def approx_min_cut_from_residuals(g, resid_map, source_vert, epsilon):
+  def dfs_on_unsaturated(curnode, visited):
+    if not curnode in visited:
+      visited.add(curnode)
+      for neighbor in g[curnode].keys():
+        edge = (curnode, neighbor)
+        resid = resid_map[edge]
+        if resid > epsilon:
+          dfs_on_unsaturated(g, neighbor, visited, resid_map)
+  visited = set()
+  dfs_on_unsaturated(source_vert, visited)
+
+  cut_edges = set()
+  for visited_node in visited:
+    for neighbor in g[visited_node].keys():
+      if not neighbor in visited:
+        cut_edges.add((visited_node, neighbor))
+  return cut_edges
+  
+
+def min_cut_from_residuals(g, resid_map, source_vert):
+  return approx_min_cut_from_residuals(g, resid_map, source_vert, 0)
