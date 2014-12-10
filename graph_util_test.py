@@ -44,5 +44,44 @@ class GraphUtilTest(unittest.TestCase):
         s.assertIn(v1, range(g.number_of_nodes()))
 
 
+  def test_cut_from_flow_easy_case(s):
+    g = networkx.DiGraph()
+    g.add_edge('a', 'b')
+    g.add_edge('b', 'd')
+    g.add_edge('a', 'c')
+    g.add_edge('c', 'd')
+
+    source = 'a'
+    residuals = {
+        ('a', 'b'): 1,
+        ('a', 'c'): 0,
+        ('b', 'd'): 0,
+        ('c', 'd'): 1,
+    }
+
+    cut_edges = graph_util.min_cut_from_residuals(g, residuals, source)
+    s.assertItemsEqual(cut_edges, set([('a', 'c'), ('b', 'd')]))
+
+
+  def test_cut_from_flow(s):
+    g = networkx.DiGraph()
+    for node in ['b', 'c', 'd']:
+      g.add_edge('a', node)
+      g.add_edge(node, 'e')
+    g.add_edge('e', 'f')
+    for node in ['g', 'h', 'i']:
+      g.add_edge('f', node)
+      g.add_edge(node, 'j')
+
+    source = 'a'
+    saturated_edges = [('a', 'c'), ('c', 'e'), ('d', 'e'), ('e', 'f')]
+
+    residuals = dict((e, 1) for e in g.edges())
+    residuals.update(dict((e, 0) for e in saturated_edges))
+
+    cut_edges = graph_util.min_cut_from_residuals(g, residuals, source)
+    s.assertItemsEqual(cut_edges, set([('e', 'f')]))
+
+
 if __name__ == '__main__':
   unittest.main()

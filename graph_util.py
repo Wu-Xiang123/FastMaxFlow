@@ -123,25 +123,31 @@ def contract_edge(g, e):
   g.remove_node(v)
 
 
-def approx_min_cut_from_residuals(g, resid_map, source_vert, epsilon):
-  def dfs_on_unsaturated(curnode, visited):
+def cut_from_residuals(resid_g, source_vert):
+  def dfs_on_resid_graph(curnode, visited):
     if not curnode in visited:
       visited.add(curnode)
-      for neighbor in g[curnode].keys():
-        edge = (curnode, neighbor)
-        resid = resid_map[edge]
-        if resid > epsilon:
-          dfs_on_unsaturated(g, neighbor, visited, resid_map)
+      for neighbor in resid_g[curnode].keys():
+        dfs_on_resid_graph(neighbor, visited)
   visited = set()
-  dfs_on_unsaturated(source_vert, visited)
+  dfs_on_resid_graph(source_vert, visited)
 
   cut_edges = set()
-  for visited_node in visited:
-    for neighbor in g[visited_node].keys():
-      if not neighbor in visited:
-        cut_edges.add((visited_node, neighbor))
+  for u, v in resid_g.edges():
+    if u in visited and not v in visited:
+      cut_edges.add((u, v))
+    if v in visited and not u in visited:
+      cut_edges.add((v, u))
   return cut_edges
-  
+
+
+def approx_min_cut_from_residuals(g, resid_map, source_vert, epsilon):
+  resid_graph = g.reverse()
+  for (u, v), resid in resid_map.items():
+    if resid > epsilon:
+      resid_graph.add_edge(u, v)
+  return cut_from_residuals(resid_graph, source_vert)
+
 
 def min_cut_from_residuals(g, resid_map, source_vert):
   return approx_min_cut_from_residuals(g, resid_map, source_vert, 0)
