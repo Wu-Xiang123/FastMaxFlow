@@ -3,7 +3,7 @@ import networkx as nx
 import random
 
 
-_EDGE_CAPACITY_ATTR = 'capacity'
+EDGE_CAPACITY_ATTR = 'capacity'
 
 
 def get_edge_capacities(g):
@@ -12,12 +12,12 @@ def get_edge_capacities(g):
 
 def get_edge_capacity(g, e):
   u, v = e
-  return g[u][v][_EDGE_CAPACITY_ATTR]
+  return g[u][v][EDGE_CAPACITY_ATTR]
 
 
 def set_edge_capacity(g, e, cap):
   u, v = e
-  g[u][v][_EDGE_CAPACITY_ATTR] = cap
+  g[u][v][EDGE_CAPACITY_ATTR] = cap
 
 
 def complete_graph(n):
@@ -43,7 +43,7 @@ def edge_iter(g):
 def capacity_edge_iter(g):
   for n, neighbor_dict in g.adjacency_iter():
     for neighbor, edge_data in neighbor_dict.items():
-      yield (n, neighbor, edge_data[_EDGE_CAPACITY_ATTR])
+      yield (n, neighbor, edge_data[EDGE_CAPACITY_ATTR])
 
 
 def cut_weight(g, vs):
@@ -52,7 +52,7 @@ def cut_weight(g, vs):
     adj_dict = g[v]
     for neighbor, data_dict in adj_dict.items():
       if not neighbor in vs:
-        weight += data_dict[_EDGE_CAPACITY_ATTR]
+        weight += data_dict[EDGE_CAPACITY_ATTR]
   return weight
 
 
@@ -62,7 +62,7 @@ def set_edge_weight(g, vs):
     adj_dict = g[v]
     for neighbor, data_dict in adj_dict.items():
       if (not neighbor in vs) or neighbor < v:
-        weight += data_dict[_EDGE_CAPACITY_ATTR]
+        weight += data_dict[EDGE_CAPACITY_ATTR]
   return weight
 
 
@@ -107,20 +107,12 @@ def deserialize_exxon_graph(s):
       if not neighbor_node in node_id_dict:
         node_id_dict[neighbor_node] = len(node_id_dict)
       neighbor_node_id = node_id_dict[neighbor_node]
-      g.add_edge(node_id, neighbor_node_id, {_EDGE_CAPACITY_ATTR: edge_capacity})
+      g.add_edge(node_id, neighbor_node_id, {EDGE_CAPACITY_ATTR: edge_capacity})
   return g, node_id_dict
 
 
 def deserialize_exxon_node_list(s):
   return [int(line.strip()) for line in s.splitlines() if line.strip()]
-
-
-def contract_edge(g, e):
-  u, v = e
-  g.remove_edge(u, v)
-  for neighbor, edge_data in g[v].items():
-    g.add_edge(u, neighbor, edge_data)
-  g.remove_node(v)
 
 
 def cut_from_residuals(resid_g, source_vert):
@@ -151,3 +143,29 @@ def approx_min_cut_from_residuals(g, resid_map, source_vert, epsilon):
 
 def min_cut_from_residuals(g, resid_map, source_vert):
   return approx_min_cut_from_residuals(g, resid_map, source_vert, 0)
+
+
+def multigraph_contract_edges(multi_g, es):
+  contracted_es = set((u, v) for (u, v, _) in es)
+  nodes_old_to_new = {}
+  meta_g = nx.MultiGraph(list(contracted_es))
+  meta_g.add_nodes_from(multi_g.nodes())
+  new_multi_g = nx.MultiGraph()
+
+  # Each connected component in (V, es) is a node in the graph post-contraction
+  for comp in nx.connected_components(meta_g):
+    new_node = tuple(comp)
+    new_multi_g.add_node(new_node)
+    for n in comp:
+      nodes_old_to_new[n] = new_node
+  # Each edge in (E - es) is an edge in the graph post-contraction, provided
+  # it is not a self-loop.
+  for u, v, edict in multi_g.edges(data=True):
+    if (u, v) in contracted_es:
+      continue
+    new_u = nodes_old_to_new[u]
+    new_v = nodes_old_to_new[v]
+    if new_u is new_v:
+      continue
+    new_multi_g.add_edge(new_u, new_v, key=None, attr_dict=edict)
+  return new_multi_g
