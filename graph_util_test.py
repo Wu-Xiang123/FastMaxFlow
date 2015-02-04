@@ -1,5 +1,6 @@
 from __future__ import division
 import graph_util
+from graph_util import EDGE_CAPACITY_ATTR
 import networkx
 import unittest
 
@@ -82,6 +83,42 @@ class GraphUtilTest(unittest.TestCase):
     cut_edges = graph_util.min_cut_from_residuals(g, residuals, source)
     s.assertItemsEqual(cut_edges, set([('e', 'f')]))
 
+
+  def test_mst_bottleneck(s):
+    g = networkx.Graph()
+    g.add_edge('a', 'f', {EDGE_CAPACITY_ATTR: 4})
+    g.add_edge('a', 'c', {EDGE_CAPACITY_ATTR: 3})
+    g.add_edge('b', 'c', {EDGE_CAPACITY_ATTR: 2})
+    g.add_edge('b', 'd', {EDGE_CAPACITY_ATTR: 3})
+    g.add_edge('c', 'd', {EDGE_CAPACITY_ATTR: 1})
+    g.add_edge('c', 'f', {EDGE_CAPACITY_ATTR: 3})
+    g.add_edge('d', 'e', {EDGE_CAPACITY_ATTR: 2})
+    g.add_edge('d', 'g', {EDGE_CAPACITY_ATTR: 3})
+    g.add_edge('e', 'f', {EDGE_CAPACITY_ATTR: 1})
+    g.add_edge('e', 'g', {EDGE_CAPACITY_ATTR: 2})
+
+    result = graph_util.compute_mst_bottleneck_dist(g)
+
+    for n in ['d', 'e', 'f', 'g']:
+      s.assertEqual(result[('a', n)], 1)
+    s.assertEqual(result[('a', 'b')], 2)
+    s.assertEqual(result[('a', 'c')], 3)
+
+    for n in ['d', 'e', 'f', 'g']:
+      s.assertEqual(result[('b', n)], 1)
+    s.assertEqual(result[('b', 'c')], 2)
+
+    for n in ['d', 'e', 'f', 'g']:
+      s.assertEqual(result[('c', n)], 1)
+    
+    s.assertEqual(result[('d', 'e')], 2)
+    s.assertEqual(result[('d', 'f')], 1)
+    s.assertEqual(result[('d', 'g')], 2)
+
+    s.assertEqual(result[('e', 'f')], 1)
+    s.assertEqual(result[('e', 'g')], 2)
+
+    s.assertEqual(result[('f', 'g')], 1)
 
 if __name__ == '__main__':
   unittest.main()

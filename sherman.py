@@ -10,6 +10,7 @@ class ShermanMaxFlowConductance:
   def __init__(s, g):
     s.graph = g
     s.vertex_degrees = [1.0 * g.degree(v) for v in g.nodes()]
+    s.vertex_degrees_inv = [1.0 / g.degree(v) if g.degree(v) > 0 else 0 for v in g.nodes()]
     s.edge_capacities = [1.0 * c for c in graph_util.get_edge_capacities(g)]
     # TODO generalize beyond just complete graphs
     s.alpha = 1.0
@@ -18,7 +19,7 @@ class ShermanMaxFlowConductance:
 
     
   def compute_R(s, x):
-    return np.multiply(x, np.reciprocal(s.vertex_degrees))
+    return np.multiply(x, s.vertex_degrees_inv)
 
 
   def compute_RT(s, x):

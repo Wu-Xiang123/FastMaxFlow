@@ -82,7 +82,7 @@ def estimate_conductance(g, n_samples):
 
 def deserialize_exxon_graph(s):
   g = nx.DiGraph()
-  node_id_dict = {}
+  #node_id_dict = {}
   for line in s.splitlines():
     line = line.strip()
     row = line.split('\t')
@@ -93,22 +93,12 @@ def deserialize_exxon_graph(s):
     if len(row) != (2 + 2 * num_adj):
       print 'warning: possibly malformed input line `%s`' % line
       continue
+    node = int(row[0])
     for i in range(num_adj):
-      edge_capacity = float(row[2 + 2*i + 1])
-      if edge_capacity == 0.0:
-        continue
-      node = int(row[0])
-      if not node in node_id_dict:
-        node_id_dict[node] = len(node_id_dict)
-      node_id = node_id_dict[node]
-      g.add_node(node_id)
-
       neighbor_node = int(row[2 + 2*i])
-      if not neighbor_node in node_id_dict:
-        node_id_dict[neighbor_node] = len(node_id_dict)
-      neighbor_node_id = node_id_dict[neighbor_node]
-      g.add_edge(node_id, neighbor_node_id, {EDGE_CAPACITY_ATTR: edge_capacity})
-  return g, node_id_dict
+      edge_capacity = float(row[2 + 2*i + 1])
+      g.add_edge(node, neighbor_node, {EDGE_CAPACITY_ATTR: edge_capacity})
+  return g
 
 
 def deserialize_exxon_node_list(s):
@@ -169,3 +159,36 @@ def multigraph_contract_edges(multi_g, es):
       continue
     new_multi_g.add_edge(new_u, new_v, key=None, attr_dict=edict)
   return new_multi_g
+
+
+def compute_mst(g):
+  mst = nx.minimum_spanning_tree(g, weight=EDGE_CAPACITY_ATTR)
+  return mst
+
+
+def compute_mst_bottleneck_dist(g):
+  def get_min_edge(g):
+    if g.number_of_edges() > 0:
+      edges = sorted(g.edges(data=True), key=lambda (u, v, data): data[EDGE_CAPACITY_ATTR])
+      return edges[0]
+    else:
+      return None
+
+  def compute_mst_bottleneck_recursive(g, mst):
+    e = get_min_edge(mst)
+    if not e:
+      return {}
+    u, v, data = e
+    bottleneck_weight = data[EDGE_CAPACITY_ATTR]
+    mst.remove_edge(u, v)
+    sub_mst_A, sub_mst_B = nx.connected_component_subgraphs(mst)
+    bottleneck_weight_dict = {}
+    for u in sub_mst_A:
+      for v in sub_mst_B:
+        bottleneck_weight_dict[(u, v)] = bottleneck_weight
+        bottleneck_weight_dict[(v, u)] = bottleneck_weight
+    bottleneck_weight_dict.update(compute_mst_bottleneck_recursive(g, sub_mst_A))
+    bottleneck_weight_dict.update(compute_mst_bottleneck_recursive(g, sub_mst_B))
+    return bottleneck_weight_dict
+
+  return compute_mst_bottleneck_recursive(g, compute_mst(g))

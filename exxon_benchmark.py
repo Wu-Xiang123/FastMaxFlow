@@ -7,6 +7,7 @@ import sys
 import time
 import graph_util
 import sherman
+import sparsification
 
 
 if len(sys.argv) != 6:
@@ -19,18 +20,23 @@ source_file = sys.argv[3]
 sink_file = sys.argv[4]
 epsilon = float(sys.argv[5])
 
-g, node_id_dict = graph_util.deserialize_exxon_graph(open(graph_file).read())
-sources = graph_util.deserialize_exxon_node_list(open(source_file).read())
-sinks = graph_util.deserialize_exxon_node_list(open(sink_file).read())
+g = graph_util.deserialize_exxon_graph(open(graph_file).read())
+for i in range(max(g.nodes())):
+  g.add_node(i)
+for u, v, c in graph_util.capacity_edge_iter(g):
+  if c == 0.0:
+    g.remove_edge(u, v)
+sources = set(graph_util.deserialize_exxon_node_list(open(source_file).read()))
+sinks = set(graph_util.deserialize_exxon_node_list(open(sink_file).read()))
 
 print 'n:', g.number_of_nodes()
 print 'm:', g.number_of_edges()
 
-demands = np.zeros(g.number_of_nodes())
-for s in sources:
-  demands[node_id_dict[s]] = -1
-for s in sinks:
-  demands[node_id_dict[s]] = 1
+print 'sparsifying...'
+sparse_g = sparsification.sparsify(g.to_undirected(), epsilon)
+print 'sparsification factor:', sparse_g.number_of_edges() / g.number_of_edges()
+
+demands = np.array([(-1 if v in sources else (1 if v in sinks else 0)) for v in g.nodes()])
 
 if algorithm == 'sherman':
   print 'starting sherman'
@@ -43,9 +49,9 @@ if algorithm == 'sherman':
 elif algorithm == 'fulkerson':
   demand_dict = {}
   for s in sources:
-    demand_dict[node_id_dict[s]] = -1
+    demand_dict[s] = -1
   for s in sinks:
-    demand_dict[node_id_dict[s]] = 1
+    demand_dict[s] = 1
   
   g = g.to_undirected()
   super_source = g.number_of_nodes()
@@ -53,9 +59,9 @@ elif algorithm == 'fulkerson':
   super_sink = g.number_of_nodes()
   g.add_node(super_sink)
   for s in sources:
-    g.add_edge(super_source, node_id_dict[s], {'capacity': 1})
+    g.add_edge(super_source, s, {'capacity': 1})
   for s in sinks:
-    g.add_edge(node_id_dict[s], super_sink, {'capacity': 1})
+    g.add_edge(s, super_sink, {'capacity': 1})
   print 'starting fulkerson'
   
   start_time = time.clock()
@@ -75,14 +81,14 @@ elif algorithm == 'boykov':
   super_source = g2.add_vertex()
   super_sink = g2.add_vertex()
   for s in sources:
-    e = g2.add_edge(super_source, node_id_dict[s])
+    e = g2.add_edge(super_source, s)
     cap_dict[e] = 1
-    e = g2.add_edge(node_id_dict[s], super_source)
+    e = g2.add_edge(s, super_source)
     cap_dict[e] = 1
   for s in sinks:
-    e = g2.add_edge(node_id_dict[s], super_sink)
+    e = g2.add_edge(s, super_sink)
     cap_dict[e] = 1
-    e = g2.add_edge(super_sink, node_id_dict[s])
+    e = g2.add_edge(super_sink, s)
     cap_dict[e] = 1
   print 'starting boykov'
 
