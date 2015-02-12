@@ -1,17 +1,16 @@
 from __future__ import division
 import numpy as np
 import networkx as nx
-import graph_tool
-import graph_tool.all as gt
 import sys
 import time
 import graph_util
+from graph_util import EDGE_CAPACITY_ATTR
 import sherman
 import sparsification
 
 
 if len(sys.argv) != 6:
-  print 'usage: ' + sys.argv[0] + ' <fulkerson|boykov|sherman> <graph file> <source node list file> <sink node list file> <epsilon>'
+  print 'usage: ' + sys.argv[0] + ' <fulkerson|sherman> <graph file> <source node list file> <sink node list file> <epsilon>'
   exit(1)
 
 algorithm = sys.argv[1]
@@ -32,9 +31,20 @@ sinks = set(graph_util.deserialize_exxon_node_list(open(sink_file).read()))
 print 'n:', g.number_of_nodes()
 print 'm:', g.number_of_edges()
 
+
+min_weight_edge = min(edict[EDGE_CAPACITY_ATTR] for (u, v, edict) in g.edges(data=True))
+max_weight_edge = max(edict[EDGE_CAPACITY_ATTR] for (u, v, edict) in g.edges(data=True))
+scaling = 1.0 / min_weight_edge
+print 'prescaling: %f' % scaling
+for u, v, data in g.edges(data=True):
+  data[graph_util.EDGE_CAPACITY_ATTR] *= scaling
+
 print 'sparsifying...'
 sparse_g = sparsification.sparsify(g.to_undirected(), epsilon)
 print 'sparsification factor:', sparse_g.number_of_edges() / g.number_of_edges()
+
+for u, v, data in g.edges(data=True):
+  data[graph_util.EDGE_CAPACITY_ATTR] /= scaling
 
 demands = np.array([(-1 if v in sources else (1 if v in sinks else 0)) for v in g.nodes()])
 
@@ -69,36 +79,6 @@ elif algorithm == 'fulkerson':
   stop_time = time.clock()
   print 'Networkx flow value:',flow_val
   print 'Networkx time:', stop_time - start_time
-elif algorithm == 'boykov':
-  g2 = gt.Graph(directed=True)
-  g2.add_vertex(g.number_of_nodes())
-  cap_dict = g2.new_edge_property("float")
-  for u, v, c in graph_util.capacity_edge_iter(g):
-    e = g2.add_edge(u, v)
-    cap_dict[e] = c
-    e = g2.add_edge(v, u)
-    cap_dict[e] = c
-  super_source = g2.add_vertex()
-  super_sink = g2.add_vertex()
-  for s in sources:
-    e = g2.add_edge(super_source, s)
-    cap_dict[e] = 1
-    e = g2.add_edge(s, super_source)
-    cap_dict[e] = 1
-  for s in sinks:
-    e = g2.add_edge(s, super_sink)
-    cap_dict[e] = 1
-    e = g2.add_edge(super_sink, s)
-    cap_dict[e] = 1
-  print 'starting boykov'
-
-  start_time = time.clock()
-  res = gt.boykov_kolmogorov_max_flow(g2, super_source, super_sink, cap_dict)
-  res.a = cap_dict.a - res.a
-  max_flow = sum(res[e] for e in super_sink.in_edges())
-  stop_time = time.clock()
-  print 'Graph-tool boykov flow value:', max_flow
-  print 'Graph-tool boykov time:', stop_time - start_time
 else:
   print 'Unknown algorithm: `%s`' % algorithm
   exit(1)
