@@ -136,6 +136,8 @@ def min_cut_from_residuals(g, resid_map, source_vert):
 
 
 def multigraph_contract_edges(multi_g, es):
+  if not es:
+    return multi_g.copy()
   contracted_es = set((u, v) for (u, v, _) in es)
   nodes_old_to_new = {}
   meta_g = nx.MultiGraph(list(contracted_es))
@@ -151,7 +153,7 @@ def multigraph_contract_edges(multi_g, es):
   # Each edge in (E - es) is an edge in the graph post-contraction, provided
   # it is not a self-loop.
   for u, v, edict in multi_g.edges(data=True):
-    if (u, v) in contracted_es:
+    if (u, v) in contracted_es or (v, u) in contracted_es:
       continue
     new_u = nodes_old_to_new[u]
     new_v = nodes_old_to_new[v]
@@ -191,4 +193,7 @@ def compute_mst_bottleneck_dist(g):
     bottleneck_weight_dict.update(compute_mst_bottleneck_recursive(g, sub_mst_B))
     return bottleneck_weight_dict
 
-  return compute_mst_bottleneck_recursive(g, compute_mst(g))
+  bottleneck_dict = {}
+  for comp in nx.connected_component_subgraphs(g):
+    bottleneck_dict.update(compute_mst_bottleneck_recursive(comp, compute_mst(comp)))
+  return bottleneck_dict

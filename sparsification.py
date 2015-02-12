@@ -17,10 +17,11 @@ from graph_util import *
 #   Benczur, Karger 2008
 
 
-def sparsify(g, epsilon, d=0.5):
+def weighted_sparsify(g, epsilon, d=0.5):
   compressed_g = nx.Graph()
   n = g.number_of_nodes()
-  edge_strength = estimation(g, 1)
+  edge_strength = window_estimation(g)
+  print 'max edge strength estimate:', max(edge_strength.values())
   compression_factor = 3 * (d + 4) * math.log(n) / (epsilon ** 2)
   for u, v, edge_data in g.edges(data=True):
     w = edge_data[EDGE_CAPACITY_ATTR]
@@ -28,7 +29,27 @@ def sparsify(g, epsilon, d=0.5):
       edge_str = edge_strength[(u,v)]
     else:
       edge_str = edge_strength[(v,u)]
-    p_e = min(1, compression_factor / edge_str)
+    p_e = min(1, compression_factor * w / edge_str)
+    if p_e is not 1 and random.random() > p_e:
+      continue
+    # keep the edge
+    compressed_g.add_edge(u, v, {EDGE_CAPACITY_ATTR: w / p_e})
+  return compressed_g
+  
+
+def sparsify(g, epsilon, d=0.5):
+  compressed_g = nx.Graph()
+  n = g.number_of_nodes()
+  edge_strength = estimation(g, 1)
+  print 'max edge strength estimate:', max(edge_strength.values())
+  compression_factor = 3 * (d + 4) * math.log(n) / (epsilon ** 2)
+  for u, v, edge_data in g.edges(data=True):
+    w = edge_data[EDGE_CAPACITY_ATTR]
+    if (u,v) in edge_strength:
+      edge_str = edge_strength[(u,v)]
+    else:
+      edge_str = edge_strength[(v,u)]
+    p_e = min(1, compression_factor * w / edge_str)
     if p_e is not 1 and random.random() > p_e:
       continue
     # keep the edge
@@ -84,8 +105,52 @@ def partition(multi_g, k):
 
   while multi_g.number_of_edges() > 2 * k * (multi_g.number_of_nodes() - 1):
     cert = weighted_certificate(multi_g, k)
-    multi_g = multigraph_contract_edges(multi_g, cert)
+    g_minus_cert = [(u, v, w) for (u, v, w) in multi_g.edges(keys=True) if ((u, v, w) not in cert) and ((v, u, w) not in cert)]
+    multi_g = multigraph_contract_edges(multi_g, g_minus_cert)
   return set(edict['original_edge'] for (_, _, edict) in multi_g.edges(data=True))
+
+
+def window_estimation(g):
+  def reverse_sorted_bin_search(a, x, lo=0, hi=None):
+    if not hi:
+      hi = len(a)
+    while lo < hi:
+      mid = int((lo + hi) / 2)
+      midval = a[mid]
+      if midval >= x:
+        lo = mid+1
+      else:  # midval < x
+        hi = mid
+    return lo
+
+  n = g.number_of_nodes()
+  bottleneck_dict = compute_mst_bottleneck_dist(g)
+  L = sorted(g.edges(), reverse=True, key=lambda e: bottleneck_dict[e])
+  L_de_vals = [bottleneck_dict[e] for e in L]
+  g_ = nx.MultiGraph()
+  g_.add_nodes_from(g)
+  edge_labels = {}
+  while L:
+    D = L_de_vals[0]
+    contract_edges = [e for e in g_.edges() if bottleneck_dict[e] > n * n * D]
+    g_ = multigraph_contract_edges(g_, contract_edges)
+    
+    split_pt = reverse_sorted_bin_search(L_de_vals, D / n)
+    new_edges = L[:split_pt]
+    L = L[split_pt:]
+    L_de_vals = L_de_vals[split_pt:]
+
+    for u, v in new_edges:
+      g_.add_edge(u, v, attr_dict=g[u][v])
+    
+    strength_estimation = estimation(g_, max(D / n, 1))
+    for u, v in new_edges:
+      if (u, v) in strength_estimation:
+        edge_labels[(u,v)] = strength_estimation[(u,v)]
+      else:
+        edge_labels[(v,u)] = strength_estimation[(v,u)]
+
+  return edge_labels
 
 
 # Finding forests of k-connected subtrees
