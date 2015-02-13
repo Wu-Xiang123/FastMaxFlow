@@ -4,26 +4,23 @@ import numpy.linalg as la
 import math
 import graph_util
 from soft_max import soft_max, grad_soft_max
+from conductance_congestion_approx import ConductanceCongestionApprox
 
 
-class ShermanMaxFlowConductance:
-  def __init__(s, g):
+class ShermanFlow:
+  def __init__(s, g, cong_approx):
     s.graph = g
-    s.vertex_degrees = [1.0 * g.degree(v) for v in g.nodes()]
-    s.vertex_degrees_inv = [1.0 / g.degree(v) if g.degree(v) > 0 else 0 for v in g.nodes()]
+    s.cong_approx = cong_approx
     s.edge_capacities = [1.0 * c for c in graph_util.get_edge_capacities(g)]
-    # TODO generalize beyond just complete graphs
-    s.alpha = 1.0
-    #s.alpha = 1.0 / graph_util.estimate_conductance(g, 100)
-    # print 'estimate that alpha = inv conductance is', s.alpha
+    s.edge_capacities_inv = [1.0 / c for c in graph_util.get_edge_capacities(g)]
 
     
   def compute_R(s, x):
-    return np.multiply(x, s.vertex_degrees_inv)
+    return s.cong_approx.approximate_congestion(x)
 
 
   def compute_RT(s, x):
-    return s.compute_R(x)
+    return s.cong_approx.approximate_potentials(x)
 
 
   def compute_C(s, x):
@@ -31,7 +28,7 @@ class ShermanMaxFlowConductance:
 
 
   def compute_Cinv(s, x):
-    return np.multiply(x, np.reciprocal(s.edge_capacities))
+    return np.multiply(x, s.edge_capacities_inv)
 
 
   def compute_B(s, x):
@@ -54,9 +51,10 @@ class ShermanMaxFlowConductance:
 
 
   def phi(s, f, b):
+    alpha = s.cong_approx.alpha(b)
     resid = b - s.compute_B(f)
     return soft_max(s.compute_Cinv(f)) + soft_max(
-        2 * s.alpha * s.compute_R(resid))
+        2 * alpha * s.compute_R(resid))
 
 
   def grad_phi(s, f, b):
@@ -64,10 +62,11 @@ class ShermanMaxFlowConductance:
     p1 = grad_soft_max(x1)
  
     resid = b - s.compute_B(f)
-    x2 = 2 * s.alpha * s.compute_R(resid)
+    alpha = s.cong_approx.alpha(b)
+    x2 = 2 * alpha * s.compute_R(resid)
     p2 = grad_soft_max(x2)
  
-    return s.compute_Cinv(p1) - 2 * s.alpha * (
+    return s.compute_Cinv(p1) - 2 * alpha * (
         s.compute_BT(s.compute_RT(p2)))
 
 
@@ -86,7 +85,8 @@ class ShermanMaxFlowConductance:
     y = np.array(f)
     b = np.array(demands)
     norm_Rb = la.norm(s.compute_R(b), np.inf)
-    scaling *= abs(k1 * math.log(n) / (2 * s.alpha * norm_Rb))
+    alpha = s.cong_approx.alpha(b)
+    scaling *= abs(k1 * math.log(n) / (2 * alpha * norm_Rb))
     b = b * scaling
     iters = 1
 
@@ -101,7 +101,7 @@ class ShermanMaxFlowConductance:
       delta = la.norm(s.compute_C(grad_phi_y), 1)
       if delta >= k2 * epsilon:
           f_prev = np.array(f)
-          f = y - delta / (1 + 4 * s.alpha**2) * s.compute_C(
+          f = y - delta / (1 + 4 * alpha**2) * s.compute_C(
               np.sign(grad_phi_y))
           y = f + (iters - 1) / (iters + 2) * (f - f_prev)
           iters += 1
@@ -139,15 +139,18 @@ class ShermanMaxFlowConductance:
 
 
 def min_congestion_flow(g, demands, epsilon):
-  conductance_cong_approx = ShermanMaxFlowConductance(g)
-  return conductance_cong_approx.min_congestion_flow(demands, epsilon)
+  cong_approx = ConductanceCongestionApprox(g)
+  sherman_flow = ShermanFlow(g, cong_approx)
+  return sherman_flow.min_congestion_flow(demands, epsilon)
 
 
 def max_flow(g, demands, epsilon):
-  conductance_cong_approx = ShermanMaxFlowConductance(g)
-  return conductance_cong_approx.max_flow(demands, epsilon)
+  cong_approx = ConductanceCongestionApprox(g)
+  sherman_flow = ShermanFlow(g, cong_approx)
+  return sherman_flow.max_flow(demands, epsilon)
 
 
 def max_st_flow(g, s, t, epsilon):
-  conductance_cong_approx = ShermanMaxFlowConductance(g)
-  return conductance_cong_approx.max_st_flow(s, t, epsilon)
+  cong_approx = ConductanceCongestionApprox(g)
+  sherman_flow = ShermanFlow(g, cong_approx)
+  return sherman_flow.max_st_flow(s, t, epsilon)

@@ -5,6 +5,7 @@ import numpy as np
 import numpy.testing as npt
 import numpy.linalg as la
 import sherman
+from conductance_congestion_approx import ConductanceCongestionApprox
 import unittest
 
 
@@ -13,7 +14,8 @@ class ShermanTest(unittest.TestCase):
     g = graph_util.complete_graph(5)
     graph_util.set_edge_capacity(g, (0, 1), 12)
     graph_util.set_edge_capacity(g, (0, 2), 13)
-    congestion_approximator = sherman.ShermanMaxFlowConductance(g)
+    congestion_approximator = ConductanceCongestionApprox(g)
+    sherman_flow = sherman.ShermanFlow(g, congestion_approximator)
 
     x = np.ones(g.number_of_edges())
     x[0] = 2
@@ -21,16 +23,17 @@ class ShermanTest(unittest.TestCase):
     expected = np.ones(g.number_of_edges())
     expected[0] = 2 * 12
     expected[1] = 3 * 13
-    npt.assert_array_equal(expected, congestion_approximator.compute_C(x))
+    npt.assert_array_equal(expected, sherman_flow.compute_C(x))
 
     expected[0] = 2 / 12
     expected[1] = 3 / 13
-    npt.assert_array_equal(expected, congestion_approximator.compute_Cinv(x))
+    npt.assert_array_equal(expected, sherman_flow.compute_Cinv(x))
 
 
   def test_compute_B(s):
     g = graph_util.complete_graph(5)
-    congestion_approximator = sherman.ShermanMaxFlowConductance(g)
+    congestion_approximator = ConductanceCongestionApprox(g)
+    sherman_flow = sherman.ShermanFlow(g, congestion_approximator)
 
     x = np.zeros(g.number_of_edges())
     x[0] = 2
@@ -41,7 +44,7 @@ class ShermanTest(unittest.TestCase):
     expected[1] = 2
     expected[2] = -1.2
     expected[3] = -0.1
-    actual_Bx = congestion_approximator.compute_B(x)
+    actual_Bx = sherman_flow.compute_B(x)
     npt.assert_array_equal(expected, actual_Bx)
 
     # TODO test BT
