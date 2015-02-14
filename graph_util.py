@@ -171,29 +171,27 @@ def compute_mst(g):
 def compute_mst_bottleneck_dist(g):
   def get_min_edge(g):
     if g.number_of_edges() > 0:
-      edges = sorted(g.edges(data=True), key=lambda (u, v, data): data[EDGE_CAPACITY_ATTR])
-      return edges[0]
+      return min(g.edges(data=True), key=lambda (u, v, data): data[EDGE_CAPACITY_ATTR])
     else:
       return None
 
-  def compute_mst_bottleneck_recursive(g, mst):
+  def compute_mst_bottleneck_recursive(g, mst, bottleneck_dict):
     e = get_min_edge(mst)
     if not e:
-      return {}
+      return
     u, v, data = e
     bottleneck_weight = data[EDGE_CAPACITY_ATTR]
     mst.remove_edge(u, v)
     sub_mst_A, sub_mst_B = nx.connected_component_subgraphs(mst)
-    bottleneck_weight_dict = {}
     for u in sub_mst_A:
       for v in sub_mst_B:
-        bottleneck_weight_dict[(u, v)] = bottleneck_weight
-        bottleneck_weight_dict[(v, u)] = bottleneck_weight
-    bottleneck_weight_dict.update(compute_mst_bottleneck_recursive(g, sub_mst_A))
-    bottleneck_weight_dict.update(compute_mst_bottleneck_recursive(g, sub_mst_B))
-    return bottleneck_weight_dict
+        bottleneck_dict[(u, v)] = bottleneck_weight
+        bottleneck_dict[(v, u)] = bottleneck_weight
+    compute_mst_bottleneck_recursive(g, sub_mst_A, bottleneck_dict)
+    compute_mst_bottleneck_recursive(g, sub_mst_B, bottleneck_dict)
+    return
 
   bottleneck_dict = {}
   for comp in nx.connected_component_subgraphs(g):
-    bottleneck_dict.update(compute_mst_bottleneck_recursive(comp, compute_mst(comp)))
+    compute_mst_bottleneck_recursive(comp, compute_mst(comp), bottleneck_dict)
   return bottleneck_dict
