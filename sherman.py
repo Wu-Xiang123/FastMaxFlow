@@ -16,11 +16,11 @@ class ShermanFlow:
 
     
   def compute_R(s, x):
-    return s.cong_approx.approximate_congestion(x)
+    return s.cong_approx.compute_dot(x)
 
 
   def compute_RT(s, x):
-    return s.cong_approx.approximate_potentials(x)
+    return s.cong_approx.compute_transpose_dot(x)
 
 
   def compute_C(s, x):

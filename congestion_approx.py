@@ -6,15 +6,16 @@
 # incurred along some subset of edges within some factor alpha.
 
 class CongestionApprox:
-  # For a congestion approximator R, compute Rb
-  def approximate_congestion(s, b):
+  # For a congestion approximator R, compute R x
+  def compute_dot(s, x):
     return None
 
 
-  # For a congestion approximator R, compute R^T b
-  def approximate_potentials(s, b):
+  # For a congestion approximator R, compute R^T x
+  def compute_transpose_dot(s, x):
     return None
 
-  # For a congestion approximator R, return the error term alpha
+  # For a congestion approximator R and demands b, return the error term alpha
+  # In using ||RB||_inf to approximate the flow min congestion
   def alpha(s, b):
     return None
