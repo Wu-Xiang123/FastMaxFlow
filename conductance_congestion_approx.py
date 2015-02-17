@@ -17,5 +17,5 @@ class ConductanceCongestionApprox(CongestionApprox):
     return np.multiply(x, s.vertex_degrees_inv)
 
 
-  def alpha(s, b):
+  def alpha(s):
     return 1.0

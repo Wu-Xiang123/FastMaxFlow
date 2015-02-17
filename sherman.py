@@ -51,7 +51,7 @@ class ShermanFlow:
 
 
   def phi(s, f, b):
-    alpha = s.cong_approx.alpha(b)
+    alpha = s.cong_approx.alpha()
     resid = b - s.compute_B(f)
     return soft_max(s.compute_Cinv(f)) + soft_max(
         2 * alpha * s.compute_R(resid))
@@ -62,7 +62,7 @@ class ShermanFlow:
     p1 = grad_soft_max(x1)
  
     resid = b - s.compute_B(f)
-    alpha = s.cong_approx.alpha(b)
+    alpha = s.cong_approx.alpha()
     x2 = 2 * alpha * s.compute_R(resid)
     p2 = grad_soft_max(x2)
  
@@ -85,7 +85,7 @@ class ShermanFlow:
     y = np.array(f)
     b = np.array(demands)
     norm_Rb = la.norm(s.compute_R(b), np.inf)
-    alpha = s.cong_approx.alpha(b)
+    alpha = s.cong_approx.alpha()
     scaling *= abs(k1 * math.log(n) / (2 * alpha * norm_Rb))
     b = b * scaling
     iters = 1

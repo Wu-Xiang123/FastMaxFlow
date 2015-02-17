@@ -3,35 +3,82 @@ from graph_util import EDGE_CAPACITY_ATTR
 from tree_congestion_approx import TreeCongestionApprox
 import networkx as nx
 import unittest
+import numpy as np
 
 
 class TreeCongestionApproxTest(unittest.TestCase):
-  def test_route_flow(s):
+  def test_dfs_edges(s):
     g = nx.Graph()
-    g.add_edge(0, 1)
-    g.add_edge(1, 2)
-    g.add_edge(2, 3)
-    g.add_edge(2, 4)
+    g.add_edge('a', 'b')
+    g.add_edge('b', 'c')
+    g.add_edge('c', 'd')
+    g.add_edge('c', 'e')
+    tree_approx = TreeCongestionApprox(g, 'b', 1.0)
+
+    dfs_edges = list(tree_approx.dfs_edges())
+    s.assertLess(dfs_edges.index(('b', 'c')), dfs_edges.index(('c', 'd')))
+    s.assertLess(dfs_edges.index(('b', 'c')), dfs_edges.index(('c', 'e')))
+    for e in [('b', 'a'), ('b', 'c'), ('c', 'd'), ('c', 'e')]:
+      s.assertIn(e, dfs_edges)
+    s.assertEqual(len(dfs_edges), 4)
+
+    for e in tree_approx.dfs_edges(data=True):
+      u, v, edict = e
+      s.assertIn((u, v), dfs_edges)
+    s.assertEqual(len(dfs_edges), len(tree_approx.dfs_edges(data=True)))
+
+
+  def test_compute_dot(s):
+    g = nx.Graph()
+    g.add_edge('a', 'b')
+    g.add_edge('b', 'c')
+    g.add_edge('c', 'd')
+    g.add_edge('c', 'e')
     for u, v, edict in g.edges(data=True):
-      edict[EDGE_CAPACITY_ATTR] = 1.0
+      edict[EDGE_CAPACITY_ATTR] = 2.5
 
-    demands = [-4, 0, 1, 1, 2]
-    t = g
-    root = 1
-    tree_approx = TreeCongestionApprox(g, t, root)
-    flow = tree_approx.route_flow(demands)
-    s.assertEqual(-4, flow[(1, 0)])
-    s.assertEqual(4, flow[(1, 2)])
-    s.assertEqual(1, flow[(2, 3)])
-    s.assertEqual(2, flow[(2, 4)])
-    s.assertEqual(4, len(flow.keys()))
+    demands = {
+        'a': -4,
+        'b': 0,
+        'c': 1,
+        'd': 1,
+        'e': 2,
+        }
+    b = [demands[n] for n in g.nodes()]
+    tree_approx = TreeCongestionApprox(g, 'b', 1.0)
 
-    Rb = tree_approx.compute_dot(demands)
-    s.assertEqual(4, Rb[0])
-    s.assertEqual(4, Rb[1])
-    s.assertEqual(1, Rb[2])
-    s.assertEqual(2, Rb[3])
+    Rb = tree_approx.compute_dot(b)
+    expected_Rb = {
+        ('b', 'a'): -4 / 2.5,
+        ('b', 'c'): 4 / 2.5,
+        ('c', 'd'): 1 / 2.5,
+        ('c', 'e'): 2 / 2.5,
+    }
+    for e, Rbi in zip(tree_approx.dfs_edges(), Rb):
+      s.assertEqual(expected_Rb[e], Rbi)
     s.assertEqual(len(g.edges()), len(Rb))
+
+
+  def test_compute_transpose_dot(s):
+    g = nx.Graph()
+    g.add_edge('a', 'b')
+    g.add_edge('b', 'c')
+    g.add_edge('c', 'd')
+    g.add_edge('c', 'e')
+    for u, v, edict in g.edges(data=True):
+      edict[EDGE_CAPACITY_ATTR] = 2.5
+
+    t = g
+    root = 'b'
+    tree_approx = TreeCongestionApprox(t, root, 1.0)
+
+    x = [1, 2, 3, 4]
+    r_transpose_x = tree_approx.compute_transpose_dot(x)
+    for i in range(5):
+      e_i_hat = [0, 0, 0, 0, 0]
+      e_i_hat[i] = 1
+      r_e_i_hat = tree_approx.compute_dot(e_i_hat)
+      s.assertEqual(r_transpose_x[i], np.dot(r_e_i_hat, x))
 
 
 if __name__ == '__main__':
