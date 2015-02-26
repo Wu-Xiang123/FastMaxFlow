@@ -9,7 +9,7 @@ class TreeCongestionApprox(CongestionApprox):
     s.root = tree_root
     s.cached_dfs_edges = list(s.recursive_dfs_edges(s.root, set(), False))
     s.cached_dfs_edges_data = list(s.recursive_dfs_edges(s.root, set(), True))
-    s.alpha = alpha
+    s.alpha_upper = alpha
 
 
   def route_flow(s, demands):
@@ -59,7 +59,7 @@ class TreeCongestionApprox(CongestionApprox):
 
   def compute_dot(s, b):
     flow = s.route_flow(b)
-    return list(flow[(u, v)] / edict[EDGE_CAPACITY_ATTR] for (u, v, edict) in (
+    return list(flow[(u, v)] / edict[EDGE_CAPACITY_ATTR] / s.alpha() for (u, v, edict) in (
         s.dfs_edges(data=True)))
 
 
@@ -67,8 +67,8 @@ class TreeCongestionApprox(CongestionApprox):
     edge_potentials = (xi / edict[EDGE_CAPACITY_ATTR] for (xi, (u,v,edict)) in(
         zip(x, s.dfs_edges(data=True))))
     node_potentials = s.compute_node_potentials(edge_potentials)
-    return list(node_potentials[n] for n in s.tree.nodes())
+    return list(node_potentials[n] / s.alpha() for n in s.tree.nodes())
 
 
   def alpha(s):
-    return s.alpha
+    return s.alpha_upper
