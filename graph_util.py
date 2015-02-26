@@ -24,6 +24,16 @@ def complete_graph(n):
   return diluted_complete_graph(n, 1.0)
 
 
+def maximum_spanning_tree(g):
+  g_ = g.to_undirected()
+  for u, v, edict in g_.edges(data=True):
+    edict[EDGE_CAPACITY_ATTR] = 1.0 / edict[EDGE_CAPACITY_ATTR]
+  mst = nx.minimum_spanning_tree(g, weight=EDGE_CAPACITY_ATTR)
+  for u, v, edict in mst.edges(data=True):
+    edict[EDGE_CAPACITY_ATTR] = 1.0 / edict[EDGE_CAPACITY_ATTR]
+  return mst
+
+
 def diluted_complete_graph(n, p):
   g = nx.DiGraph()
   g.add_nodes_from(range(n))
