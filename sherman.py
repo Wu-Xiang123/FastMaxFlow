@@ -16,11 +16,11 @@ class ShermanFlow:
 
     
   def compute_R(s, x):
-    return s.cong_approx.compute_dot(x)
+    return np.array(s.cong_approx.compute_dot(x))
 
 
   def compute_RT(s, x):
-    return s.cong_approx.compute_transpose_dot(x)
+    return np.array(s.cong_approx.compute_transpose_dot(x))
 
 
   def compute_C(s, x):
@@ -136,21 +136,3 @@ class ShermanFlow:
     demands[source_i] = -1
     demands[sink_i] = 1
     return s.max_flow(demands, epsilon)
-
-
-def min_congestion_flow(g, demands, epsilon):
-  cong_approx = ConductanceCongestionApprox(g)
-  sherman_flow = ShermanFlow(g, cong_approx)
-  return sherman_flow.min_congestion_flow(demands, epsilon)
-
-
-def max_flow(g, demands, epsilon):
-  cong_approx = ConductanceCongestionApprox(g)
-  sherman_flow = ShermanFlow(g, cong_approx)
-  return sherman_flow.max_flow(demands, epsilon)
-
-
-def max_st_flow(g, s, t, epsilon):
-  cong_approx = ConductanceCongestionApprox(g)
-  sherman_flow = ShermanFlow(g, cong_approx)
-  return sherman_flow.max_st_flow(s, t, epsilon)
