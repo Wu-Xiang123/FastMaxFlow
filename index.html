@@ -1,39 +1,47 @@
 <!doctype html>
+<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
+<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on https://github.com/jonrohan -->
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>FastMaxFlow by weinstein</title>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="javascripts/scale.fix.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <h1 class="header">FastMaxFlow</h1>
-        <p class="header">Nearly maximum flows in nearly linear time and other flow approximation tools</p>
+  <link rel="stylesheet" href="stylesheets/stylesheet.css" media="screen">
+  <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="javascripts/script.js"></script>
 
-        <ul>
-          <li class="download"><a class="buttons" href="https://github.com/weinstein/FastMaxFlow/zipball/master">Download ZIP</a></li>
-          <li class="download"><a class="buttons" href="https://github.com/weinstein/FastMaxFlow/tarball/master">Download TAR</a></li>
-          <li><a class="buttons github" href="https://github.com/weinstein/FastMaxFlow">View On GitHub</a></li>
-        </ul>
+  <title>FastMaxFlow</title>
+  <meta name="description" content="Nearly maximum flows in nearly linear time and other flow approximation tools">
 
-        <p class="header">This project is maintained by <a class="header name" href="https://github.com/weinstein">weinstein</a></p>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 
+</head>
 
-      </header>
-      <section>
-        <h2>
+<body>
+
+  <div class="wrapper">
+    <header>
+      <h1 class="title">FastMaxFlow</h1>
+    </header>
+    <div id="container">
+      <p class="tagline">Nearly maximum flows in nearly linear time and other flow approximation tools</p>
+      <div id="main" role="main">
+        <div class="download-bar">
+        <div class="inner">
+          <a href="https://github.com/weinstein/FastMaxFlow/tarball/master" class="download-button tar"><span>Download</span></a>
+          <a href="https://github.com/weinstein/FastMaxFlow/zipball/master" class="download-button zip"><span>Download</span></a>
+          <a href="https://github.com/weinstein/FastMaxFlow" class="code">View FastMaxFlow on GitHub</a>
+        </div>
+        <span class="blc"></span><span class="trc"></span>
+        </div>
+        <article class="markdown-body">
+          <h2>
 <a id="what" class="anchor" href="#what" aria-hidden="true"><span class="octicon octicon-link"></span></a>What?</h2>
 
-<p>A python implementation of an algorithm for solving maximum flow (or more generally, minimum congestion) problems on a capacitated graph as described by Jonah Sherman [1]. The resulting flow assignment is epsilon-accurate and takes time proportional <a href="http://en.wikipedia.org/wiki/Big_O_notation#Extensions_to_the_Bachmann.E2.80.93Landau_notations">nearly</a> to the number of edges, and inversely proportional to the square of the error term epsilon.</p>
+<p>A python implementation of an algorithm for solving maximum flow (or more generally, minimum congestion) problems on a capacitated graph as described by Jonah Sherman [1].</p>
+
+<p>The resulting flow assignment is epsilon-accurate and takes time <a href="http://en.wikipedia.org/wiki/Big_O_notation#Extensions_to_the_Bachmann.E2.80.93Landau_notations">"nearly"</a> proportional to the number of edges, and inversely proportional to the square of the error term epsilon.</p>
 
 <p>Additionally, implementations of the Nagamochi-Ibaraki edge connectivity certificate [2, 3] and Benczur and Karger's approximate cut preserving sparsification [4] are provided.</p>
 
@@ -46,12 +54,26 @@
 <li>H. Nagamochi, T. Ibaraki: A linear-time algorithm for finding a sparse k-connected spanning subgraph of a k-connected graph, Algorithmica vol.7, 1992, pp.583-596.</li>
 <li>A. Benczur, D. Karger: Randomized Approximation Schemes for Cuts and Flows in Capacitated Graphs, <a href="http://arxiv.org/abs/cs/0207078">arXiv:cs/0207078</a>.</li>
 </ol>
-      </section>
-      <footer>
-        <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
-      </footer>
+        </article>
+      </div>
     </div>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-		
-  </body>
+    <footer>
+      <div class="owner">
+      <p><a href="https://github.com/weinstein" class="avatar"><img src="https://avatars2.githubusercontent.com/u/6294260?v=3&amp;s=60" width="48" height="48"></a> <a href="https://github.com/weinstein">weinstein</a> maintains <a href="https://github.com/weinstein/FastMaxFlow">FastMaxFlow</a></p>
+
+
+      </div>
+      <div class="creds">
+        <small>This page generated using <a href="https://pages.github.com/">GitHub Pages</a><br>theme by <a href="https://twitter.com/jonrohan/">Jon Rohan</a></small>
+      </div>
+    </footer>
+  </div>
+  <div class="current-section">
+    <a href="#top">Scroll to top</a>
+    <a href="https://github.com/weinstein/FastMaxFlow/tarball/master" class="tar">tar</a><a href="https://github.com/weinstein/FastMaxFlow/zipball/master" class="zip">zip</a><a href="" class="code">source code</a>
+    <p class="name"></p>
+  </div>
+
+  
+</body>
 </html>
