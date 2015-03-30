@@ -10,7 +10,7 @@ import sparsification
 
 
 if len(sys.argv) != 6:
-  print 'usage: ' + sys.argv[0] + ' <fulkerson|sherman> <graph file> <source node list file> <sink node list file> <epsilon>'
+  print 'usage: ' + sys.argv[0] + ' <networkx|sherman> <graph file> <source node list file> <sink node list file> <epsilon>'
   exit(1)
 
 algorithm = sys.argv[1]
@@ -31,21 +31,6 @@ sinks = set(graph_util.deserialize_exxon_node_list(open(sink_file).read()))
 print 'n:', g.number_of_nodes()
 print 'm:', g.number_of_edges()
 
-
-min_weight_edge = min(edict[EDGE_CAPACITY_ATTR] for (u, v, edict) in g.edges(data=True))
-max_weight_edge = max(edict[EDGE_CAPACITY_ATTR] for (u, v, edict) in g.edges(data=True))
-scaling = 1.0 / min_weight_edge
-print 'prescaling: %f' % scaling
-for u, v, data in g.edges(data=True):
-  data[graph_util.EDGE_CAPACITY_ATTR] *= scaling
-
-print 'sparsifying...'
-sparse_g = sparsification.sparsify(g.to_undirected(), epsilon)
-print 'sparsification factor:', sparse_g.number_of_edges() / g.number_of_edges()
-
-for u, v, data in g.edges(data=True):
-  data[graph_util.EDGE_CAPACITY_ATTR] /= scaling
-
 demands = np.array([(-1 if v in sources else (1 if v in sinks else 0)) for v in g.nodes()])
 
 if algorithm == 'sherman':
@@ -56,7 +41,7 @@ if algorithm == 'sherman':
   print 'sherman flow:\n',flow
   print 'sherman flow value:',flow_value
   print 'sherman time:', stop_time - start_time
-elif algorithm == 'fulkerson':
+elif algorithm == 'networkx':
   demand_dict = {}
   for s in sources:
     demand_dict[s] = -1
@@ -72,10 +57,10 @@ elif algorithm == 'fulkerson':
     g.add_edge(super_source, s, {'capacity': 1})
   for s in sinks:
     g.add_edge(s, super_sink, {'capacity': 1})
-  print 'starting fulkerson'
+  print 'starting networkx max flow'
   
   start_time = time.clock()
-  flow_val, flow = nx.ford_fulkerson(g, super_source, super_sink)
+  flow_val, flow = nx.maximum_flow(g, super_source, super_sink)
   stop_time = time.clock()
   print 'Networkx flow value:',flow_val
   print 'Networkx time:', stop_time - start_time
