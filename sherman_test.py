@@ -57,7 +57,7 @@ class ShermanTest(unittest.TestCase):
     return
 
 
-  def test_max_flow_on_complete_graphs(s):
+  def test_max_flow_conductance_cong_approx(s):
     epsilon = 0.1
     n = 10
     for p in [0.7, 0.8, 0.9, 1.0]:
@@ -65,13 +65,27 @@ class ShermanTest(unittest.TestCase):
         g = graph_util.diluted_complete_graph(n, p)
         if not g.has_edge(0, 1):
           g.add_edge(0, 1, {'capacity': 1})
-        cong_approx = MstCongestionApprox(g.to_undirected())
+        cong_approx = ConductanceCongestionApprox(g)
         sherman_flow = sherman.ShermanFlow(g, cong_approx)
-        flow, flow_value = sherman_flow.max_st_flow(0, 1, epsilon)
-        actual_flow_value, actual_flow = nx.ford_fulkerson(
-            g.to_undirected(), 0, 1)
-        s.assertGreater(flow_value, (1.0 - epsilon) * actual_flow_value)
-        s.assertLess(flow_value, (1.0 + epsilon) * actual_flow_value)
+        _, flow_value = sherman_flow.max_st_flow(0, 1, epsilon)
+        actual_flow_value, _ = nx.maximum_flow(g.to_undirected(), 0, 1)
+        s.assertGreaterEqual(flow_value, (1.0 - epsilon) * actual_flow_value)
+        s.assertLessEqual(flow_value, (1.0 + epsilon) * actual_flow_value)
+
+
+  # TODO: why is this test so flaky?
+  def test_max_flow_mst_cong_approx(s):
+    epsilon = 0.1
+    for i in range(20):
+      g = graph_util.diluted_complete_graph(10, 0.9)
+      if not g.has_edge(0, 1):
+        g.add_edge(0, 1, {'capacity': 1})
+      cong_approx = MstCongestionApprox(g.to_undirected())
+      sherman_flow = sherman.ShermanFlow(g, cong_approx)
+      _, flow_value = sherman_flow.max_st_flow(0, 1, epsilon)
+      actual_flow_value, _ = nx.maximum_flow(g.to_undirected(), 0, 1)
+      s.assertGreaterEqual(flow_value, (1.0 - epsilon) * actual_flow_value)
+      s.assertLessEqual(flow_value, (1.0 + epsilon) * actual_flow_value)
 
 
 if __name__ == '__main__':
