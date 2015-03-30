@@ -18,4 +18,5 @@ class ConductanceCongestionApprox(CongestionApprox):
 
 
   def alpha(s):
+    # TODO: this probably isn't quite right.
     return 1.0
