@@ -19,14 +19,14 @@ source_file = sys.argv[3]
 sink_file = sys.argv[4]
 epsilon = float(sys.argv[5])
 
-g = graph_util.deserialize_exxon_graph(open(graph_file).read())
+g = graph_util.deserialize_csv_adj_list(open(graph_file).read(), sep='\t')
 for i in range(max(g.nodes())):
   g.add_node(i)
 for u, v, c in graph_util.capacity_edge_iter(g):
   if c == 0.0:
     g.remove_edge(u, v)
-sources = set(graph_util.deserialize_exxon_node_list(open(source_file).read()))
-sinks = set(graph_util.deserialize_exxon_node_list(open(sink_file).read()))
+sources = set(graph_util.deserialize_node_list(open(source_file).read()))
+sinks = set(graph_util.deserialize_node_list(open(sink_file).read()))
 
 print 'n:', g.number_of_nodes()
 print 'm:', g.number_of_edges()

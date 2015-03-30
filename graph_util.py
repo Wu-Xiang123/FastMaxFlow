@@ -90,12 +90,12 @@ def estimate_conductance(g, n_samples):
       [v for v in g.nodes() if random.random() < 0.5])) for i in range(n_samples)])
 
 
-def deserialize_exxon_graph(s):
+def deserialize_csv_adj_list(s, sep=','):
   g = nx.DiGraph()
   #node_id_dict = {}
   for line in s.splitlines():
     line = line.strip()
-    row = line.split('\t')
+    row = line.split(sep)
     if len(row) < 2:
       print 'warning: possibly malformed input line `%s`' % line
       continue
@@ -111,7 +111,7 @@ def deserialize_exxon_graph(s):
   return g
 
 
-def deserialize_exxon_node_list(s):
+def deserialize_node_list(s):
   return [int(line.strip()) for line in s.splitlines() if line.strip()]
 
 
