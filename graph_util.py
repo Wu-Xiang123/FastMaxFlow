@@ -111,8 +111,56 @@ def deserialize_csv_adj_list(s, sep=','):
   return g
 
 
+def serialize_csv_adj_list(g, sep=','):
+  rows = []
+  for u in g.nodes():
+    neighbor_dict = g[u]
+    num_neighbors = len(neighbor_dict)
+    row = [u, num_neighbors]
+    for v, edict in neighbor_dict.items():
+      row.extend([v, edict[EDGE_CAPACITY_ATTR]])
+    rows.append(row)
+  return '\n'.join(sep.join(str(cell) for cell in row) for row in rows)
+
+
 def deserialize_node_list(s):
   return [int(line.strip()) for line in s.splitlines() if line.strip()]
+
+
+def serialize_node_list(ns):
+  return '\n'.join(ns)
+
+
+def gen_rand_2d_mesh(width, height):
+  g = nx.DiGraph()
+  for j in range(height):
+    for i in range(width):
+      cur_id = j * width + i
+      x_nbr_id = j * width + (i + 1)
+      y_nbr_id = (j + 1) * width + i
+      if i < width-1:
+        g.add_edge(cur_id, x_nbr_id, {EDGE_CAPACITY_ATTR: random.random()})
+      if j < height-1:
+        g.add_edge(cur_id, y_nbr_id, {EDGE_CAPACITY_ATTR: random.random()})
+  return g
+
+
+def gen_rand_3d_mesh(width, height, depth):
+  g = nx.DiGraph()
+  for k in range(depth):
+    for j in range(height):
+      for i in range(width):
+        cur_id = k * width * height + j * width + i
+        x_nbr_id = k * width * height + j * width + (i + 1)
+        y_nbr_id = k * width * height + (j + 1) * width + i
+        z_nbr_id = (k + 1) * width * height + j * width + i
+        if i < width-1:
+          g.add_edge(cur_id, x_nbr_id, {EDGE_CAPACITY_ATTR: random.random()})
+        if j < height-1:
+          g.add_edge(cur_id, y_nbr_id, {EDGE_CAPACITY_ATTR: random.random()})
+        if k < depth-1:
+          g.add_edge(cur_id, z_nbr_id, {EDGE_CAPACITY_ATTR: random.random()})
+  return g
 
 
 def cut_from_residuals(resid_g, source_vert):
