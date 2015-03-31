@@ -6,6 +6,7 @@ import time
 import graph_util
 from graph_util import EDGE_CAPACITY_ATTR
 import sherman
+from conductance_congestion_approx import ConductanceCongestionApprox
 import sparsification
 
 
@@ -36,7 +37,9 @@ demands = np.array([(-1 if v in sources else (1 if v in sinks else 0)) for v in 
 if algorithm == 'sherman':
   print 'starting sherman'
   start_time = time.clock()
-  flow, flow_value = sherman.max_flow(g, demands, epsilon)
+  cong_approx = ConductanceCongestionApprox(g)
+  sherman_flow = sherman.ShermanFlow(g, cong_approx)
+  flow, flow_value = sherman_flow.max_flow(demands, epsilon)
   stop_time = time.clock()
   print 'sherman flow:\n',flow
   print 'sherman flow value:',flow_value
