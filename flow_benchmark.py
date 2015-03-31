@@ -42,21 +42,15 @@ if algorithm == 'sherman':
   print 'sherman flow value:',flow_value
   print 'sherman time:', stop_time - start_time
 elif algorithm == 'networkx':
-  demand_dict = {}
-  for s in sources:
-    demand_dict[s] = -1
-  for s in sinks:
-    demand_dict[s] = 1
-  
   g = g.to_undirected()
-  super_source = g.number_of_nodes()
+  super_source = max(g.nodes()) + 1
   g.add_node(super_source)
-  super_sink = g.number_of_nodes()
+  super_sink = max(g.nodes()) + 1
   g.add_node(super_sink)
   for s in sources:
-    g.add_edge(super_source, s, {'capacity': 1})
+    g.add_edge(super_source, s)
   for s in sinks:
-    g.add_edge(s, super_sink, {'capacity': 1})
+    g.add_edge(s, super_sink)
   print 'starting networkx max flow'
   
   start_time = time.clock()
